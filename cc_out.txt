@@ -1,0 +1,201 @@
+index=1 current_parent=24602 parent_overlap_size=[6, 6]
+icurrent_lb=0
+lb.lo={'addr': 24601, 'size': 6}
+Setting Largest
+in get_largest: largest_block.largest_overlapper{0: {'addr': 24601, 'size': 6}}
+current_largest_block=0
+largest_found_block=0
+lbps=2
+SIMPSONS did it! address_range:2
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6]
+icurrent_lb=0
+lb.lo={'addr': 24601, 'size': 6}
+index=1 current_parent=24602 parent_overlap_size=[6, 6]
+icurrent_lb=0
+lb.lo={'addr': 24601, 'size': 6}
+size=7
+after_RAISE
+add overlap array! index=0
+lindex=0n_poa:24601 npos:6
+FOUND AN OVERLAP!#!#!  cur_addr=24602
+just SET overlapped!
+indexError: AFTER append: Block: @ 24602 {6: {'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 6, 'parent_overlap_size': [6, 6, 7], 'parent_overlap_addr': [24601, 24602, 24602], 'parent_overlap_deleted': [True, True, False], 'baddress': 24602, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72610>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be725e0>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72310>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72670>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be726a0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be726d0>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}, 7: {'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 7, 'parent_overlap_size': [6, 6, 7], 'parent_overlap_addr': [24601, 24602, 24602], 'parent_overlap_deleted': [True, True, False]}}
+add overlap array! index=1
+lindex=1n_poa:24602 npos:6
+FOUND AN OVERLAP!#!#!  cur_addr=24602
+just SET overlapped!
+indexError: AFTER append: Block: @ 24602 {6: {'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 6, 'parent_overlap_size': [6, 6, 7], 'parent_overlap_addr': [24601, 24602, 24602], 'parent_overlap_deleted': [True, True, False], 'baddress': 24602, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72610>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be725e0>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72310>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72670>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be726a0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be726d0>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}, 7: {'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 7, 'parent_overlap_size': [6, 6, 7], 'parent_overlap_addr': [24601, 24602, 24602], 'parent_overlap_deleted': [True, True, False]}}
+add overlap array! index=2
+lindex=2n_poa:24602 npos:7
+FOUND AN OVERLAP!#!#!  cur_addr=24602
+just SET overlapped!
+indexError: AFTER append: Block: @ 24602 {6: {'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 6, 'parent_overlap_size': [6, 6, 7], 'parent_overlap_addr': [24601, 24602, 24602], 'parent_overlap_deleted': [True, True, False], 'baddress': 24602, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72610>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be725e0>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72310>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72670>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be726a0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be726d0>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}, 7: {'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 7, 'parent_overlap_size': [6, 6, 7], 'parent_overlap_addr': [24601, 24602, 24602], 'parent_overlap_deleted': [True, True, False]}}
+DETERMINE IS SHRINKING poa:[24601, 24602, 24602]
+lbps=2
+SIMPSONS did it! address_range:3
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24601, 'size': 6}
+index=1 current_parent=24602 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24601, 'size': 6}
+index=2 current_parent=24602 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24601, 'size': 6}
+Setting Largest
+in get_largest: largest_block.largest_overlapper{0: {'addr': 24602, 'size': 7}}
+current_largest_block=0
+largest_found_block=0
+lbps=3
+SIMPSONS did it! address_range:3
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=1 current_parent=24602 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=2 current_parent=24602 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+Setting Largest
+in get_largest: largest_block.largest_overlapper{0: {'addr': 24602, 'size': 7}}
+current_largest_block=0
+largest_found_block=0
+lbps=3
+SIMPSONS did it! address_range:3
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=1 current_parent=24602 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=2 current_parent=24602 parent_overlap_size=[6, 6, 7]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+read @ array: {'address': 24603, 'operator': 'NOP', 'operand': '', 'byte_cnt': 1}
+segment.label=NOP
+segment.data=
+read_instruction_data: 24603
+In hash!
+check all_found_segments (RH): d94b5b70decbba56947cea8375490669
+size=6
+after_RAISE
+add overlap array! index=0
+lindex=0n_poa:24601 npos:6
+FOUND AN OVERLAP!#!#!  cur_addr=24603
+just SET overlapped!
+indexError: AFTER append: Block: @ 24603 {6: {'count': 1, 'overlapped': True, 'addresses': [24603], 'addr': 24603, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False]}}
+add overlap array! index=1
+lindex=1n_poa:24602 npos:6
+FOUND AN OVERLAP!#!#!  cur_addr=24603
+just SET overlapped!
+indexError: AFTER append: Block: @ 24603 {6: {'count': 1, 'overlapped': True, 'addresses': [24603], 'addr': 24603, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False]}}
+add overlap array! index=2
+lindex=2n_poa:24602 npos:7
+FOUND AN OVERLAP!#!#!  cur_addr=24603
+just SET overlapped!
+indexError: AFTER append: Block: @ 24603 {6: {'count': 1, 'overlapped': True, 'addresses': [24603], 'addr': 24603, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False]}}
+add overlap array! index=3
+lindex=3n_poa:24603 npos:6
+FOUND AN OVERLAP!#!#!  cur_addr=24603
+just SET overlapped!
+indexError: AFTER append: Block: @ 24603 {6: {'count': 1, 'overlapped': True, 'addresses': [24603], 'addr': 24603, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False]}}
+DETERMINE IS SHRINKING poa:[24601, 24602, 24602, 24603]
+lbps=3
+SIMPSONS did it! address_range:4
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=1 current_parent=24602 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=2 current_parent=24602 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=3 current_parent=24603 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+Setting Largest
+in get_largest: largest_block.largest_overlapper{0: {'addr': 24602, 'size': 7}}
+current_largest_block=0
+largest_found_block=0
+lbps=4
+SIMPSONS did it! address_range:4
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=1 current_parent=24602 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=2 current_parent=24602 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=3 current_parent=24603 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+Setting Largest
+in get_largest: largest_block.largest_overlapper{0: {'addr': 24602, 'size': 7}}
+current_largest_block=0
+largest_found_block=0
+lbps=4
+SIMPSONS did it! address_range:4
+current_largest_block=0
+index=0 current_parent=24601 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=1 current_parent=24602 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=2 current_parent=24602 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+index=3 current_parent=24603 parent_overlap_size=[6, 6, 7, 6]
+icurrent_lb=0
+lb.lo={'addr': 24602, 'size': 7}
+read @ array: {'address': 24604, 'operator': 'NOP', 'operand': '', 'byte_cnt': 1}
+segment.label=NOP
+segment.data=
+read_instruction_data: 24604
+Key Error on found_hash
+read @ array: {'address': 24605, 'operator': 'NOP', 'operand': '', 'byte_cnt': 1}
+segment.label=NOP
+segment.data=
+read_instruction_data: 24605
+Key Error on found_hash
+read @ array: {'address': 24606, 'operator': 'NOP', 'operand': '', 'byte_cnt': 1}
+segment.label=NOP
+segment.data=
+read_instruction_data: 24606
+Key Error on found_hash
+read @ array: {'address': 24607, 'operator': 'NOP', 'operand': '', 'byte_cnt': 1}
+segment.label=NOP
+segment.data=
+read_instruction_data: 24607
+Key Error on found_hash
+read @ array: {'address': 24608, 'operator': 'NOP', 'operand': '', 'byte_cnt': 1}
+segment.label=NOP
+segment.data=
+read_instruction_data: 24608
+Key Error on found_hash
+found_node at:24601
+current_size=6 block[cur,size]:{'count': 1, 'overlapped': True, 'addresses': [24601], 'addr': 24601, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False], 'baddress': 24601, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72610>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be725e0>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72310>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72670>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be726a0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be726d0>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}
+found_node at:24602
+current_size=6 block[cur,size]:{'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False], 'baddress': 24602, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72610>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be725e0>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72310>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72670>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be726a0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be726d0>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}
+current_size=7 block[cur,size]:{'count': 1, 'overlapped': True, 'addresses': [24602], 'addr': 24602, 'size': 7, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False], 'baddress': 24602, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72730>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be72640>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72700>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72790>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be727c0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be727f0>, 24601: <cosmic_cruncher.Segment object at 0x7fc94be72820>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}
+found_node at:24603
+current_size=6 block[cur,size]:{'count': 1, 'overlapped': True, 'addresses': [24603], 'addr': 24603, 'size': 6, 'parent_overlap_size': [6, 6, 7, 6], 'parent_overlap_addr': [24601, 24602, 24602, 24603], 'parent_overlap_deleted': [True, True, True, False], 'baddress': 24603, 'segment': {24595: <cosmic_cruncher.Segment object at 0x7fc94be72610>, 24596: <cosmic_cruncher.Segment object at 0x7fc94be725e0>, 24597: <cosmic_cruncher.Segment object at 0x7fc94be72310>, 24598: <cosmic_cruncher.Segment object at 0x7fc94be72670>, 24599: <cosmic_cruncher.Segment object at 0x7fc94be726a0>, 24600: <cosmic_cruncher.Segment object at 0x7fc94be726d0>}, 'largest_overlapper_addr': 0, 'largest_overlapper_size': 0}
+report all blocks!!!!{0: {'largest_overlapper_addr': 24602, 'largest_overlapper_size': 7}}
+done!
+All Done!
+
+0 Errors found during assembly.
+0 Warnings found during assembly.
+
+[johntalent@billybob ncosmic]$ 
+
