@@ -13,18 +13,17 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import hashlib
 import sys
-from overlap import *
+#JKLO from overlap import *
 
 DEBUG_ONE_INSTRUCTION = 0
-DEBUG_CREATE = 1
+DEBUG_CREATE = 0
 DEBUG_HASH_SEGMENT=0
 DEBUG_REPORT=0
-DEBUG_ALL_INSTRUCTIONS=1
-DEBUG_READ_ALL_OF_SEGMENT=1
-DEBUG_ONE_INSTRUCTION_PRINT_INSTRUCTION=1
+DEBUG_ALL_INSTRUCTIONS=0
+DEBUG_READ_ALL_OF_SEGMENT=0
+DEBUG_ONE_INSTRUCTION_PRINT_INSTRUCTION=0
  
 all_found_segments={}
 all_found_addresses={}
@@ -35,7 +34,6 @@ largest_found_block={}
 largest_found_block[block_id]={}
 largest_found_block[block_id]['size'] = 0
 largest_found_block[block_id]['addr'] = 0
-
 
 class addr(object):
 
@@ -62,43 +60,50 @@ class sizer(object):
 class Scan():
   def __init__(self):
     next_address = 0
-
-  def one_instruction(self, address):
+  
     from assem import array_aid
     from assem import ending_address
     global array_aid
     global addr
-    #global ending_address
-    #global current_address
-    #global previous_address
+    global ending_address 
 
-    if (DEBUG_ONE_INSTRUCTION):
-      print("\nScan one_instruction-- ending_address="+ str(ending_address))
+  def one_instruction(self, address=addr.begining_address):
+    global array_aid
+    global addr
+
+
     segment = Segment(0,address,0)
     new_current_data = 0
 
-    if (address!=0):
-      addr.current_address = address
-      addr.previous_address = address
-    else:
-      address = addr.current_address
-      addr.previous_address = address
+
+ 
+    if (address==addr.begining_address):
+        addr.current_address = address
+        addr.previous_address = address
+    else: 
+ 
+               
+        address = addr.current_address
+        addr.previous_address = address
   
     segment.address = address
+    #
+ 
+
     #6502
-    if (DEBUG_ONE_INSTRUCTION):
-      print("\nsegment_address="+str(segment.address)+ " len_aid="+str(len(array_aid)))
 
     if (segment.address < addr.ending_address):
-      #for ib in array_aid:
-      #    print("ar:" + str(array_aid[ib]))
       print("read @ array: " + str(array_aid[address]))
       got_mnemonic = array_aid[segment.address] #read_mnemonic
     else:
-      print("fail @ " + str(addr.ending_address))
+      print("fail end @ " + str(segment.address))
       return segment
 
+    segment.size = got_mnemonic['byte_cnt']
 
+
+    segment.next_address += segment.size #+address
+ 
     segment.label = got_mnemonic['operator']
 
     segment.data = got_mnemonic['operand']
@@ -108,13 +113,11 @@ class Scan():
     #          3 bytes for 1 instr and 16bit data
 
 
-    segment.size = got_mnemonic['byte_cnt']
-    segment.next_address = address+segment.size
+
 
     addr.current_address += segment.size
-    addr.previous_address = address
-    addr.next_address = address+segment.size
  
+
     if(DEBUG_ONE_INSTRUCTION_PRINT_INSTRUCTION):
       print("segment.label=" + segment.label)
       print("segment.data="  + segment.data)
@@ -126,14 +129,14 @@ class Scan():
       print("previous_address = + " + str(addr.previous_address) + ";")
       print("segment.next_address = + " + str(segment.next_address) + ";")
 
-      print("read_current_instr: data:"+ str(segment.data)+ " segment_size:" + str(segment.size))
       print("\n")
-    self.total_size = 1 + segment.size
+
+    
 
     return segment
 
 
-  def all_instructions(self, read_segment, index=0):
+  def all_instructions(self, read_segment, new_index=addr.begining_address):
     global addr
 
     if(DEBUG_ALL_INSTRUCTIONS):
@@ -150,20 +153,22 @@ class Scan():
     j.sort()
     sorted_list = j
     max_list = len(j)
-    print ("index = " + str(index))
-    i=index
+    print ("new_index = " + str(new_index))
+    i=new_index
     z = 0
     start_all_address = i
 
-    if(DEBUG_ALL_INSTRUCTIONS):
-      print("j=" + str(j))
-      print("ending_address=" + str(addr.ending_address)+ "\n")
+    print("j=" + str(j))
+    print("ending_address=" + str(addr.ending_address)+ "\n")
     
     while (z< max_list):
       if (i>= addr.ending_address):
         return addr.ending_address
-
+      print("before one instruction")
       cur_inst = self.one_instruction(i)
+      if (z==0):
+         pretty_first_address_found = cur_inst.address
+      
       if (cur_inst.address >= addr.ending_address):
         return addr.ending_address
 
@@ -185,14 +190,17 @@ class Scan():
         ###j = read_segment.__next__()
         z += 1
         if(z>=max_list):
-          print("FOUND @ " + str(start_all_address) + " !!!!!!!!!!!!!!!!!!!!")
+          # REFERENCE: (read_segment[j[0]]['segment'].address)
+          original_address = read_segment[j[0]]['segment'].starting_segment_address
+          print("FOUND new address at " +str(pretty_first_address_found)+ " from original address @ "+ str(original_address) + " !!!!!!!!!!!!!!!!!!!!")
+          
           if (cur_inst.data):
             addr.next_all_address = start_all_address + len(cur_inst.data) + 1
           else:
             addr.next_all_address = start_all_address + 1   
           print("Found addr_next_address=" + str(addr.next_all_address))
-          return start_all_address
-    
+          #return start_all_address
+          return pretty_first_address_found
         if(DEBUG_ALL_INSTRUCTIONS):
           print("IF i=" + str(i))
           print("z="+ str(z) )
@@ -209,10 +217,6 @@ class Scan():
         j = sorted_list
         start_all_address = cur_inst.address 
 
-        if(DEBUG_ALL_INSTRUCTIONS):
-          print("ELSE i=" + str(i))
-          print("Z=" + str(z))
-          print("s_error")
          
       i+= cur_inst.size  #1
 
@@ -237,20 +241,21 @@ class Segment(Scan):
     self.label = ''
     self.new_key='segment'
     self.count=0
-    self.ending_address =0 
+    self.ending_segment_address =0 
     scan = Scan()
     global Address
     self.addr = addr
     self.starting_segment_address = 0
     #self.next_address = 0
     addresses = [0]
+   
   def empty(segment):
     segment.address = 0
     segment.label = 'JMP'
     segment.size = 0
     segment.count = 0
     segment.next_address = 0
-    segment.ending_address = 0
+    segment.ending_segment_address = 0
     return segment
   def copy(segment):
     return_segment.hashid = ''
@@ -275,9 +280,9 @@ class Segment(Scan):
     elif (key == 'hashid'):
       self.new_key = 'hashid'
       return self.hashid
-    elif (key == 'ending_address'):
-      self.new_key = "ending_address"
-      return self.ending_address
+    elif (key == 'ending_segment_address'):
+      self.new_key = "ending_segment_address"
+      return self.ending_segment_address
     elif (key == 'starting_segment_address'):
       self.new_key = 'starting_segment_address'
 
@@ -298,9 +303,9 @@ class Segment(Scan):
     elif self.new_key=='count':
 
       self['segment'].count = value
-    elif self.new_key=='ending_addresss':
+    elif self.new_key=='ending_segment_address':
 
-      self['segment'].ending_address = value
+      self['segment'].ending_segment_address = value
 
  
     elif self.new_key=='addresses':
@@ -319,9 +324,9 @@ class Segment(Scan):
     if (self.new_key=='hashid'):
 
       return self.hashid
-    elif (self.new_key=='ending_address'):
+    elif (self.new_key=='ending_segment_address'):
 
-      return self.ending_address
+      return self.ending_segment_address
     elif (self.new_key=='addresses'):
 
       return self.addresses
@@ -339,20 +344,21 @@ class Segment(Scan):
       hashed_object = hashlib.md5(str(hash_string).encode('utf-8'))
   
       self.hashid = hashed_object.hexdigest()
-      #print("HASHIT" + self.hashid)
       return self.hashid
     else:
       print("error error")
       return ''
 
 
-  def hash_segment(self, read_segment):
+  def hash_segment(self, read_segment, seg_size):
     total_hash = ''
     for (key,val) in read_segment.items():
 
       if(DEBUG_HASH_SEGMENT):
         print("vallab:" + val['segment'].label + " DATA: " + val['segment'].data )
-      total_hash += val['segment'].label + val['segment'].data
+      total_hash += val['segment'].label + val['segment'].data  
+
+    total_hash += str(seg_size)
     
     if (DEBUG_HASH_SEGMENT):
       print('end hash segment total_hash=' + total_hash)
@@ -365,9 +371,8 @@ class Segment(Scan):
   scan = Scan()
   empty=False
   hashid = ''
-  ending_address = 0
+  ending_segment_address = 0
   total_hashid = ''
-  total_size = 0
   new_key='segment'
   data = ''
   size=0
@@ -377,173 +382,143 @@ class Segment(Scan):
   next_address=0
 
   def start_new_segment(self,address,segment):
-    size_id=0
-    if (DEBUG_CREATE):
-      print ("start_new_segment START=" + str(address) ) 
- 
+    print("start_new") 
     read_instruction_data = self.scan.one_instruction(address)
     #address = read_instruction_data.next_address
-
-
+    if (read_instruction_data.address >= addr.ending_address):
+        address= addr.ending_address
     hash_address = read_instruction_data.hash_it(address)
-    segment = { address: {'starting_segment_address': address, 'segment': read_instruction_data, 'hashid': hash_address, 'ending_address': 0}}
-    if (DEBUG_CREATE):
-      print ("start_new_segment END=" + str(address) + "\n") 
+    segment = { address: {'starting_segment_address': address, 'segment': read_instruction_data, 'hashid': hash_address, 'ending_segment_address': 0, 'size':0}}
     return segment                                          
 
   def create_segment(self, address):
     scan = Scan()
     global sizer 
     global addr
-
+    #JOHNL TODO remove dupliate
     addr.starting_segment_address = address
-    final_address = addr.ending_address
 
-    if (self.next_address>0):
-      address = self.next_address
+    starting_segment_address = address
+    #ending_segment_address= addr.ending_address
 
-    #hash_address = read_instruction_data.hash_it(address)
-    #new_segment = { address: {'starting_segment_address': address, 'segment': read_instruction_data, 'hashid': hash_address}}
-    #final_new_segment = { address: {'starting_segment_address': address, 'segment': read_instruction_data, 'hashid': hash_address}}
+    #if (self.next_address>0):
+    #  address = self.next_address
+
     #TODO new_segment resets, 1)pass in!
     new_segment={}
     final_new_segment={}
-    print("create_segment: just before start_new_segment!")
+    
     new_segment = self.start_new_segment(address,new_segment)
-    print("create_segment: after call to start_new_segment!!!")
     final_new_segment= self.start_new_segment(address,final_new_segment)
-   
-    total_size = 0
+    
+    if((final_new_segment[address]['starting_segment_address'] == addr.ending_address) or (new_segment[address]['starting_segment_address'] == addr.ending_address)): 
+      return new_segment
 
-    if(DEBUG_CREATE):
-      print("\n-- Create segment ----")
-      print("current_segment_size=" + str(sizer.current_segment_size))
-      print("new_segment.size: " + str(new_segment[address]['segment'].size)+ " min_ss:" + str(sizer.minimum_segment_size))
-      print("before size loop; ADDRESSS="+ str(address))
-
-      
 
     #build up that new segment
-    #TODO create intermediary segment called CACHE and flush only NON BXX/RTS out of function
     #while( sizer.current_segment_size < sizer.window_segment_size): 
-    while (address < addr.ending_address and
-           sizer.current_segment_size < sizer.window_segment_size):
+    while (address < addr.ending_address and sizer.current_segment_size<sizer.window_segment_size):
+
 
       # Warning: Modifies current_address (global implcit counter)
       #try:
-      if (DEBUG_CREATE):
-        print("in create before read_current_instruction; ADDRESS1="+ str(address))
- 
       read_instruction_data = scan.one_instruction(address)
 
-
-      if (DEBUG_CREATE):
-        print("in create after read_current_instruction; ADDRESSS2="+ str(address))
+      address = read_instruction_data.address
+      next_address = read_instruction_data.next_address
+      print("create seg address="+str(address)+ "create seg na=" +str(next_address))
  
-      #except AttributeError:
-      #  return new_segment
-          
-        # TODO find better way to conglomerate instructions into a segment
-      # TODO: fix later
-      ###print("before make_segment: " + str(read_instruction_data.address) + " size: " + str(read_instruction_data.size))   
-      ###if((read_instruction_data.label == 'BEQ') or (read_instruction_data.label == 'BNE') or
-      ###    (read_instruction_data.label == 'BMI') or (read_instruction_data.label == 'BCC') or
-      ###    (read_instruction_data.label == 'BVC') or (read_instruction_data.label == 'BVS') or
-      ###    (read_instruction_data.label == 'RTS') or (read_instruction_data.label == 'BPL') or
-      ###    (read_instruction_data.label == 'BCS')):
-            #TODO need to have proper reset of new_segment
-            #TODO reset as above, code here, whole current segment is not usable
-      ###      print("SKIPPING " + read_instruction_data.label+ "\n")
-      ###      nWrite_Segment= read_instruction_data.next_address
-      ###      break #continue
+      sizer.current_segment_size += (next_address-address)
+ 
+      #JLNEW
+      ending_segment_address= address+read_instruction_data.size-1 
+
+      print("segment size" + str(sizer.current_segment_size)) 
+      print("ending_segment_address" + str(ending_segment_address)) 
+
+
+      if (address >= addr.ending_address):
+        return addr.ending_address
 
 
       # WE HAVE A VALID SEGMENT 
-      new_segment[read_instruction_data.address] = read_instruction_data
+      new_segment[address] = read_instruction_data
 
-      if (DEBUG_CREATE):
-        print(" read_address before assigning SA!"+str(read_instruction_data.address))
-        print("SA="+str(addr.starting_segment_address))
-
-      new_segment[read_instruction_data.address].starting_segment_address = addr.starting_segment_address
+      new_segment[address].starting_segment_address = addr.starting_segment_address
+      new_segment[address].ending_segment_address = address
+      starting_segment_address= new_segment[address].starting_segment_address
 
 
-      total_size = total_size + read_instruction_data.size
+      final_segment_address = addr.starting_segment_address + sizer.current_segment_size   #total_size
 
-      if (DEBUG_CREATE):
-        print("cache_save=" +str(new_segment[read_instruction_data.address].next_address))
-        print("current_segment_size="+str(sizer.current_segment_size)+ " window_segment_size=" + str(sizer.window_segment_size))
-      if (sizer.current_segment_size == 0):
-        self.address = address
+      new_segment[addr.starting_segment_address].ending_segment_address = final_segment_address
 
 
-      address = read_instruction_data.next_address
-
-      if (sizer.current_segment_size==0):
-        self.next_address = address
-
-      final_address = address
-
-      sizer.current_segment_size += 1
-
-      #TODO PRIORITY ONE, find keyerror in final_segment code below
-      #copy over cache
+      if(final_segment_address < addr.ending_address): 
+          #some duplicates
+          final_new_segment = new_segment
+         
+          final_new_segment[addr.starting_segment_address]['ending_segment_address'] =  new_segment[address].ending_segment_address 
+        
+          print("\n")
+          # within current window or past final_address
 
 
-      #print("before cache xfer=" +str(new_segment[address]['segment'].next_address))
-      #print("before cache xfer, ssa=" + str(new_segment[address]['starting_segment_address']))
-      final_segment_address = addr.starting_segment_address + total_size
+      if (((sizer.current_segment_size+1) > sizer.window_segment_size) or (final_segment_address >= addr.ending_address)):
 
-      final_new_segment = new_segment
-      final_new_segment[addr.starting_segment_address].ending_address = final_segment_address
-
- 
-
-      print("---ENDING_ADDRESS : " +str(final_new_segment[addr.starting_segment_address].ending_address))
-      print("total_size        : " +str(final_new_segment[addr.starting_segment_address].total_size))
-      print("css="+str(sizer.current_segment_size) + " wss="+str(sizer.window_segment_size)+" fss="+str(final_segment_address)  )
-      print("\n")
-      print("super ending address=" +str(addr.ending_address))
-      # within current window or past final_address
-      if (((sizer.current_segment_size+1) >= sizer.window_segment_size) or (final_segment_address >= addr.ending_address)):
-        size_id = total_size
-
-        final_segment_address = addr.starting_segment_address + total_size
+        final_segment_address = addr.starting_segment_address + sizer.current_segment_size
  
         #new_segment[addr.starting_segment_address].starting_segment_address = addr.starting_segment_address
         
-        final_new_segment[addr.starting_segment_address].starting_segment_address = addr.starting_segment_address
-        final_new_segment[addr.starting_segment_address].total_size = total_size
-        final_new_segment[addr.starting_segment_address].hashid = self.hash_segment(final_new_segment)
+        final_new_segment[addr.starting_segment_address]['starting_segment_address'] = addr.starting_segment_address
+        final_new_segment[addr.starting_segment_address]['hashid'] = self.hash_segment(final_new_segment, sizer.current_segment_size)
+        final_new_segment[addr.starting_segment_address]['size'] = addr.starting_segment_address + sizer.current_segment_size
+
 
         addr.next_all_address = addr.next_address
  
-        print("starting_segment..." + str(addr.starting_segment_address) + " total_size=" +str(total_size) + " finale_segment_address:" +str(final_segment_address))
 
-        print("ending_address:  " + str(final_new_segment[addr.starting_segment_address].ending_address)) 
-
-     
+           
       # past ending address
       if (final_segment_address >= addr.ending_address):
-        print("final_segment_address is > ending =" +str(final_segment_address))        
         break 
-       
-      print("while inside address")
+      #print("addy="+str(address)+ "na=" +str(next_address))
+      #JLNEW
 
-    if (DEBUG_CREATE):
-      print("\n")
-      print("starting_segment_address: " + str(addr.starting_segment_address))
-      print("SSA: " + str(final_new_segment[addr.starting_segment_address]['starting_segment_address']))
-      print ("new_segment total_hashid:" + final_new_segment[addr.starting_segment_address]['hashid'] + "\n")
+      address = next_address
+    
+
      
+    print("CREATED NEW SEGMENT!")
+    print("Starting segment address"+ str(starting_segment_address))
+    print("segment ending_address" + str(ending_segment_address))
+    print("--------------------")
+
+
     return final_new_segment
 
 
   def bump_segment_address_by_one(self, address):
-    print("BUMP")
     return address
 
+  def update_found_segment(self, begining_address, address, segment):
+    # TODO: code to get dictionary hash access
+    global all_found_segments
+    global all_found_addresses
+    global all_only_found_addresses
+ 
+    hashed=''
+    size = sizer.current_segment_size
+ 
+    hashed = self.hash_segment(segment,size)
+    
+    self.update_base_segment(address,hashed, size,segment)
+    self.update_base_address(begining_address, address,hashed, size, segment) 
+    self.update_only_base_address(address, hashed, size, segment)
+ 
+    return # self.next_address
 
+ 
   
   def read_all_of_segment(self,address):
     global addr
@@ -557,106 +532,70 @@ class Segment(Scan):
     found_segment={}
     found_segment = self.start_new_segment(address,found_segment) 
 
-    if (DEBUG_READ_ALL_OF_SEGMENT):
-      print("\nread_all :before create_segment_address=" +str(address))
+    if(found_segment[address]['starting_segment_address'] >= addr.ending_address): 
+      return found_segment
 
-    if(self.next_address>0):
-      address = self.next_address
+
+    #if(self.next_address>0):
+    #  address = self.next_address
    
-
-    if (DEBUG_READ_ALL_OF_SEGMENT):
-      print("read_all :after self.address=" +str(address) + "\n")
 
     sizer.current_segment_size = 0
  
-    while (address+sizer.current_segment_size < addr.ending_address and
-         sizer.current_segment_size < sizer.window_segment_size and
-         sizer.window_segment_size < sizer.maximum_segment_size):
+    while ((address+sizer.current_segment_size) < addr.ending_address and
+         sizer.current_segment_size <= sizer.window_segment_size and
+         sizer.window_segment_size <= sizer.maximum_segment_size):
 
       read_segment = self.create_segment(address)
-      if (address >= addr.ending_address):
-       break
+ 
 
-      address = address + read_segment[addr.starting_segment_address].total_size 
-
-      print ("total_size address=" +str(address))
-
+      address = address 
+                 
      
       if (address >= addr.ending_address):
-        break
+          break
 
       read_hash = read_segment[addr.starting_segment_address]['hashid']
 
-      if (DEBUG_READ_ALL_OF_SEGMENT):
-        print("read_hash=" + read_hash)
-        print("PRE-.address=" + str(address))
-        print("\n")
-        #print("county="+ str( all_found_segments[read_hash]['count']) )
-
-      #try:
-      #  if (all_found_segments[read_hash]['count'] > 0):
-      #    break
-      #except (KeyError):
-      #    break
-  
-       
+      print("current_segment_size=" + str(sizer.current_segment_size) )
+      print("window_segment_size=" + str(sizer.window_segment_size) )
+      print("maxiumum_segment_size=" + str(sizer.maximum_segment_size) )
+      
       main_create_segment_address = address
-      #main_create_segment_address = address 
+
       #fetch all instances of this particular segment throughout code space
-      while (address<addr.ending_address):
-
-
-        if(DEBUG_READ_ALL_OF_SEGMENT):
-          print("B: scan_all_instructions address=" +str(address)+ " ending_address="+ str(addr.ending_address))
+      while ((address+sizer.current_segment_size) < addr.ending_address and
+         sizer.current_segment_size <= sizer.window_segment_size and
+         sizer.window_segment_size <= sizer.maximum_segment_size):
+        print("SCAN SEGMENT:"+str(address))
 
         # should either give a working address or ending_address
         address = self.scan.all_instructions(read_segment, address)
 
         # JOHN: TODO!!!!!!! add end of address checking HERE!
+        print("after scan address="+ str(address))
+        if(address < addr.ending_address):
+          
 
-        #print ("AFF NEXT IS" + str(addr.next_address))
-
-        if(DEBUG_READ_ALL_OF_SEGMENT):
-          print("A: scan_all_instructions address=" +str(address))
-
-        if(address >= addr.ending_address):
-          break
-        
-        print ("current_segment_size = "+str(sizer.current_segment_size))
-
-        if(address <= addr.ending_address):
-          #try:      
-          #  save_address = read_segment[address]['segment'].next_address
-          #except(KeyError):
-          #  return address
-          bCreated = False
-          try:
-
-            print("check all_found_segments: " + str(all_found_segments[read_hash][sizer.current_segment_size]['count'])) 
- 
-            if (bCreated == False and all_found_segments[read_hash]['count'] < 1):
-             
-                self.create_found_segment(address, read_segment)
-                print("CREATE: create create found:"+str(address))
-              
-            elif (bCreated == False):
-              self.update_found_segment(address, read_segment)
-              print("CREATE: update found:"+ str(address) + " count="+ str(all_found_segments[read_hash]['count']) )
-          except(KeyError):
-            bCreated=True
-
-            print("CREATER: error create found:"+ str(address))
-            self.create_found_segment(address, read_segment)
-           
-          #address = addr.next_all_address
+          # we found a copy, update
+          print("\nupdate_found_segment address=" +str(address))
+          print("\nupdate_found_segment next_all_address=" +str(addr.next_all_address))
+          self.update_found_segment(addr.starting_segment_address, address, read_segment)   
+        else:
+          break 
         address = addr.next_all_address
-        print("AFTER FOUND NEXT ADDR IS " + str(address))
-       
-        if(DEBUG_READ_ALL_OF_SEGMENT): 
-          print("EA="+str(addr.ending_address)+" CA=" +str(address))
 
-      print("MAIN_in_create_segment_address:"+str(main_create_segment_address))  
-      address = main_create_segment_address 
+      if (address >=addr.ending_address):
+        break
+
+      address = addr.next_address 
+  
+      print("addr.next_all_address=" + str(addr.next_all_address)) 
+      print("seg address=" + str(address)) 
+      print("mcreate_segment=" + str(main_create_segment_address))
+
+      
+      # address = main_create_segment_address 
     #main while for create_segment
  
     if(DEBUG_READ_ALL_OF_SEGMENT):
@@ -665,87 +604,97 @@ class Segment(Scan):
     return addr.next_all_address #self.next_address
 
 
-  def create_found_segment(self, address, segment):
-    global all_found_segments
-    global all_found_addresses
-    global all_only_found_addresses
-    hased = ''
 
-    hashed = self.hash_segment(segment)
+  def update_only_base_address(self, address, hashed, size, segment):
+    global all_only_found_segments
 
-    size = sizer.current_segment_size
+    counter = 1
+    try: 
+      counter=all_only_found_addresses[address][size]['count'] + 1
+
+      print ("update_base_address counter:=" +str(counter))
+
+      all_only_found_addresses[address][size]['count']=counter
+      all_only_found_addresses[address][size]['addresses']= [address]
+      all_only_found_addresses[address][size]['hashid'] = hashed
+      all_only_found_addresses[address][size]['ending_segment_address'] = address
+      all_only_found_addresses[address][size]['segment']= segment
+
+    except(KeyError):
+      all_only_found_addresses[address]={size: {}}
+      #all_only_found_addresses[address][size]= {'segment':segment, 'count': counter, 'addresses':[address], 'hashid': hashed,'ending_segment_ddress': address }
  
-    all_found_segments[hashed]={size: {'segment':segment, 'count': 1, 'addresses':[address], 'hashid': hashed,'ending_address': address }}
-    #print(all_found_segments)
-    ###########################################################
-    #all_found_addresses[address][size] = {'segment':segment}
-    #all_found_addresses[address][size]['segment']= segment
+      all_only_found_addresses[address][size]['count']=counter
+      all_only_found_addresses[address][size]['addresses']= [address]
+      all_only_found_addresses[address][size]['hashid'] = hashed
+      all_only_found_addresses[address][size]['ending_segment_address'] = address
+      all_only_found_addresses[address][size]['segment']= segment
 
-    # count
-    #all_found_addresses[address][size]= 1 
-    #all_found_addresses[address][size]['hashid'] = hashed
   
-    try:   
-      all_found_addresses[address][size]= {'segment':segment, 'count': 1, 'addresses':[address], 'hashid': hashed,'ending_address': address }
-      print(all_found_addresses)
-    except(KeyError):
-      all_found_addresses[address]={} 
-      all_found_addresses[address]={size: {'segment':segment, 'count': 1, 'addresses':[address], 'hashid': hashed,'ending_address': address }}
-       
-    try:   
-      all_only_found_addresses[address][size]= {'segment':segment, 'count': 1, 'addresses':[address], 'hashid': hashed,'ending_address': address }
-      print(all_found_addresses)
-    except(KeyError):
-      all_only_found_addresses[address]={} 
-      all_only_found_addresses[address]= {'segment':segment, 'count': 1, 'addresses':[address], 'hashid': hashed,'ending_address': address }
- 
-    print("create found_segment=" +str(address)+ "seg size=" +str(sizer.current_segment_size))
+    return 
 
-    
-    return #self.next_address
-  def update_found_segment(self, address, segment):
-    # TODO: code to get dictionary hash access
-    global all_found_segments
+
+
+  def update_base_address(self, begining_address, address, hashed, size,segment):
     global all_found_addresses
-    global all_only_found_addresses
- 
-    hashed=''
 
-    hashed = self.hash_segment(segment)
+    counter = 1
+    try: 
+      counter=all_found_addresses[address][size]['count'] + 1
 
-    size = sizer.current_segment_size
- 
-    print("update found_segment=" +str(address)+ "seg size="+str(sizer.current_segment_size))
+      print ("update_base_address counter:=" +str(counter))
 
-    counter = all_found_segments[hashed][size]['count']+1
-    all_found_segments[hashed][size]['count'] = counter
+      all_found_addresses[address][size]['count']=counter
+      all_found_addresses[address][size]['addresses']= [address]
+      all_found_addresses[address][size]['hashid'] = hashed
+      all_found_addresses[address][size]['ending_segment_address'] = address
+      all_found_addresses[address][size]['segment']= segment
+      all_found_addresses[address][size]['start_address'] = begining_address
+   
+    except(KeyError):
+      all_found_addresses[address]={size: {}}
+   
+      all_found_addresses[address][size]['count']=counter
+      all_found_addresses[address][size]['addresses']= [address]
+      all_found_addresses[address][size]['hashid'] = hashed
+      all_found_addresses[address][size]['ending_segment_address'] = address
+      all_found_addresses[address][size]['segment']= segment
+      all_found_addresses[address][size]['start_address'] = begining_address
+   
+  
+    return 
+
+
+  def update_base_segment(self, address, hashed, size,segment):
+    global all_found_segments
+
+    counter = 1
+    try: 
+      counter = all_found_segments[hashed][size]['count']+1
+      print ("base COUNTER1=" +str(counter))
+
+      all_found_segments[hashed][size]['count'] = counter
      
-    all_found_segments[hashed][size]['addresses'].append(address)
+      all_found_segments[hashed][size]['addresses'].append(address)
+      all_found_segments[hashed][size]['hashid'] = hashed
+      all_found_segments[hashed][size]['ending_segment_address'] = address
+      all_found_segments[hashed][size]['segment']= segment
+      all_found_segments[hashed][size]['address'] = address
+    except(KeyError):
+      all_found_segments[hashed]={size: {}}
     
-    print("all_found_segments_count=" + str(counter))
-    ##############################################################################
-    #all_found_addresses[address][size]['segment']= all_found_segments[hashed]['segment']
-    try:   
-      all_found_addresses[address][size]= {'segment':segment, 'count': counter, 'addresses':[address], 'hashid': hashed,'ending_address': address }
-      print(all_found_addresses)
-    except(KeyError):
-      all_found_addresses[address]={} 
-      all_found_addresses[address]={size: {'segment':segment, 'count': counter, 'addresses':[address], 'hashid': hashed,'ending_address': address }}
+      all_found_segments[hashed][size]['count'] = counter
+      all_found_segments[hashed][size]['addresses']= [address]
+      
+      #all_found_segments[hashed][size]['addresses'].append(address)
+      all_found_segments[hashed][size]['hashid'] = hashed
+      all_found_segments[hashed][size]['ending_segment_address'] = address
+      all_found_segments[hashed][size]['segment']= segment
+      all_found_segments[hashed][size]['address'] = address
  
-    # number this hash has seen
-    #all_found_addresses[address][size]=counter
+  
+    return 
 
-    #all_found_addresses[address][sizer.current_segment_size]+=1
-
-    try:   
-      all_only_found_addresses[address]={'segment':segment, 'count': counter, 'addresses':[address], 'hashid': hashed,'ending_address': address }
-      print(all_found_addresses)
-    except(KeyError):
-      all_only_found_addresses[address]={} 
-      all_only_found_addresses[address]= {'segment':segment, 'count': counter, 'addresses':[address], 'hashid': hashed,'ending_address': address }
- 
- 
-    return # self.next_address
 
   def report(self):
     #print("report for all segments:" + segment)
@@ -758,22 +707,34 @@ class Segment(Scan):
 
 
 def generate_report(segment):
-  import overlap 
+  #JKLO import overlap 
   w_size = 1
-  
-  for got_address,got_seg in segment.items():
-    print("found node at " + format(got_address,'02x')) 
  
-    for i,j in got_seg.items():
-      sys.stdout.write (" size=" +str(i))
+  # reference: all_found_segments[hashed][size]['count']
+  #print("FOUND original address: -"+ str(read_segment[j[z-1]]['segment'].address)+ "- '"+ cur_inst.label.strip() + " " + cur_inst.data.strip()  + "' @ adress "+ str(start_all_address) + " !!!!!!!!!!!!!!!!!!!!")
+          
+ 
+  for got_address,got_seg in segment.items():
+    #print("found node at " + format(got_address,'02x') +" decimal=" +str(got_address)) 
+    #print("found original segement" +  "node at " + format(got_address,'02x') +" decimal=" +str(got_address)) 
+ 
 
-      print(" Segment HASH=" + str(segment[got_address][i]['hashid']))
-      #print("i="+str(i)  + " j=" + str(j))
-      #if (i!='segment'):
-      for k,m in j.items(): 
-        print("k="+str(k) + " m=" + str(m))
-        if (k == 'segment'):
-          pass #print("m[0]="+ str( m[0]) )
+    for i,j in got_seg.items():
+      # sys.stdout.write (" size=" +str(i))
+      #print("found original segment " + str(segment[got_address][i]['address']) + " node at " + format(got_address,'02x') +" decimal=" +str(got_address)) 
+      print("found original segment " + str(segment[got_address][i]['start_address']) + " node at " + format(got_address,'04x') +" decimal=" +str(got_address) + " size=" +str(i)) 
+ 
+   
+      print("seg count=" + str(segment[got_address][i]['count']))
+          
+      if (segment[got_address][i]['count'] > 1):
+        print(" Segment HASH=" + str(segment[got_address][i]['hashid']))
+        #print("i="+str(i)  + " j=" + str(j))
+        #if (i!='segment'):
+        for k,m in j.items(): 
+          print("k="+str(k) + " m=" + str(m))
+          if (k == 'segment'):
+            pass #print("m[0]="+ str( m[0]) )
       print("")
 
 
@@ -945,7 +906,10 @@ def create_block_hierarchy(address):
     while (cur_addr < addr.ending_address):
 
         read_instruction_data = scan.one_instruction(cur_addr)
-      
+        if (read_instruction_data.address >= addr.ending_address):
+          return addr.ending_address
+
+
         print("read_instruction_data: "+ str(read_instruction_data.address))
         #NOTE: TODO shold have size in addition to address for hashid. both in main prg and here 
        
@@ -953,7 +917,7 @@ def create_block_hierarchy(address):
         try:
             found_hash = all_only_found_addresses[read_instruction_data.address]['hashid'] 
         except(KeyError):
-            print("Key Error on found_hash")
+            print("Key Error on found_hash addr="+str(read_instruction_data.address))
             cur_addr = read_instruction_data.next_address
             continue
 
@@ -1181,16 +1145,17 @@ def invoke_cosmic_cruncher():
   global sizer
   global largest_block
   #global all_found_segments
+  global array_aid
  
   size=0
   #addr = Address()
   segment = Segment(0,0,0)
-  addr.begining_address = 24576
+  addr.begining_address = 768 # TODO CHANGE ME!!!!!!!!!!!!24576
   addr.starting_address = addr.begining_address
 
   address = addr.starting_address
   sizer.current_segment_size = 0 #for inner loops
-  sizer.window_segment_size = 6
+  sizer.window_segment_size = 7
  
   segment_size = sizer.current_segment_size
   all_found_segments={segment_size: {'segment':segment, 'count': 1, 'addresses':[address]}}
@@ -1202,7 +1167,7 @@ def invoke_cosmic_cruncher():
 
   largest_block.largest_overlapper={9:{'size':0,'addr':0}}
  
-   #all_found_addresses[0]= {'segment':segment, 'count': 1, 'addresses':[0], segment_size: [] }
+  #all_found_addresses[0]= {'segment':segment, 'count': 1, 'addresses':[0], segment_size: [] }
  
   
   #all_found_segments['0'] = {'segment':Segment(0,0,0)}
@@ -1217,7 +1182,7 @@ def invoke_cosmic_cruncher():
 
   i = addr.begining_address
   if (addr.ending_address < 1):
-    addr.ending_address = 512000
+    addr.ending_address = 128000
  
   while True:
     try:
@@ -1226,54 +1191,43 @@ def invoke_cosmic_cruncher():
     except KeyError:
       #print("i=" + str(i))
       addr.ending_byte_address = i
-      i -= cur_inst.size
-      addr.ending_address = i
+      i -= cur_inst.size-1
       break 
-
-  print("ending_address is: " + str(addr.ending_address))
+  addr.ending_address = i+1
+  print("instruction ending_address is: " + str(addr.ending_address))
 
   find_all_segments.next_address = addr.starting_address
-  
-  while (sizer.window_segment_size <= sizer.maximum_segment_size and
-         address < addr.ending_address): # and
-        # sizer.current_segment_size <= sizer.window_segment_size):
+ 
+  while (address+sizer.current_segment_size < addr.ending_address and
+         sizer.current_segment_size < sizer.window_segment_size and
+         sizer.window_segment_size < sizer.maximum_segment_size):
 
-    #sizer.current_segment_size = 0
     sizer.current_segment_size = 0
     find_all_segments.next_address = addr.starting_address
     address = addr.starting_address
      
-    while (address+sizer.current_segment_size < addr.ending_address and
-           sizer.current_segment_size <= sizer.window_segment_size):
+    while (((address+sizer.current_segment_size) < addr.ending_address) and (address < addr.ending_address) and ( sizer.current_segment_size <= sizer.window_segment_size)):
       #read all segments of window size +1
       print("\n")
       print("current_segment_size=" + str(sizer.current_segment_size))
       print("window_segment_size=" + str(sizer.window_segment_size))
+      print("find_all_segments.next_address=" +str( find_all_segments.next_address))
       print("---------------------------------------------------------")
-      #address = find_all_segments.check_segment(address)
       address = find_all_segments.read_all_of_segment(find_all_segments.next_address)
-      
+      #JLNEW might need to make it bump by size
+      #sizer.current_segment_size += address
+ 
+      sizer.current_segment_size +=1  
     sizer.window_segment_size += 1
-    print("BUMP window size="+ str(sizer.window_segment_size))
-    print("BUMP address =" +str(find_all_segments.address) + " next_address=" + str(find_all_segments.next_address))
-    print("BUMP SA=" +str(addr.starting_address))
-    #find_all_segments.next_address = addr.starting_address
-    address = addr.starting_address
-    if(sizer.window_segment_size == 8):
-      break
   
 
   total_hash = ''
-  #for (key,val) in all_found_segments.items():
 
-  #  if(DEBUG_REPORT):
-  #    print("rep:" +str(val['segment'].address) + ' ' + val['segment'].label + " DATA: " + val['segment'].data )
   generate_report(all_found_addresses)
 
-  has_nonoverlapped_blocks = create_block_hierarchy(0)
-
-  report_this_block = select_largest_blocks(has_nonoverlapped_blocks)
-  report_all_blocks(report_this_block)
+  ##REMOVE OVERLAP has_nonoverlapped_blocks = create_block_hierarchy(0)
+  ##REMOVE OVERLAP report_this_block = select_largest_blocks(has_nonoverlapped_blocks)
+  ##REMOVE OVERLAP report_all_blocks(report_this_block)
 
   print("All Done!")
 

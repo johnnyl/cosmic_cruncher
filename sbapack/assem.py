@@ -1,4 +1,4 @@
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #
 #   assem.py
 #
@@ -10,20 +10,28 @@
 #
 #   Actual assembling is initiated from this file.
 #
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-import sys, os, string, time
-import dec, direct, errors, files, help, listing, macros, target
+import sys
+import os
+import string
+import time
 
+import dec
+import direct
+import errors
+import files
+import help
+import listing
+import macros
+import target
+
+
+# ------------------------------------------------------------------------------
 # BO JKL
 array_aid={}
-ending_address=0 
+ending_address=0
 import cosmic_cruncher
-
-
-#from cosmic_cruncher import array_aid
-#EO JKL
-#------------------------------------------------------------------------------
 
 def RunSbassembler():
 
@@ -35,13 +43,14 @@ def RunSbassembler():
     global Asm
 
     if (sys.version[0] != '3'):
-        print ("*** Fatal Error! Requires Python 3 to run")
-        print ("")
-        sys.exit (dec.ERRLVL_PYTHON)
+        print("*** Fatal Error! Requires Python 3 to run")
+        print("")
+        sys.exit(dec.ERRLVL_PYTHON)
 
     dec.Asm.Timestamp = time.strftime("%a %Y-%m-%d %H:%M:%S")
     files.SayHello(dec.VERSION)
-    direct.CreateDirList()      # Create a dictionary of all available directives
+    # Create a dictionary of all available directives
+    direct.CreateDirList()
 
     sourcename = files.GetSourceName(sys.argv)
 
@@ -52,13 +61,13 @@ def RunSbassembler():
 
     if sourcename[0] == '-':
         # No filename was specified or an invalid option was given
-        print ("")
-        print ("*** Fatal Error: No source file specified.")
-        print ("Use: sbasm <sourcefile>")
-        print ("")
+        print("")
+        print("*** Fatal Error: No source file specified.")
+        print("Use: sbasm <sourcefile>")
+        print("")
         sys.exit(dec.ERRLVL_FATAL)
 
-    print ("Assembling....")
+    print("Assembling....")
 
     dec.Asm.Pass = 1
     Assemble(sourcename)
@@ -69,13 +78,19 @@ def RunSbassembler():
     # begining of JKL
     cosmic_cruncher.invoke_cosmic_cruncher()
 
-    if sourcename == "-f" or sourcename == "--fullcompile":
-        Assemble(newsourcename)
- 
-    # EO JKL
     errors.ShowErrors()
 
-#------------------------------------------------------------------------------
+    if dec.Asm.Pass == 2 and dec.Asm.Errors == 0:
+        # We're in the second pass and there are no errors
+        # Let's see if a .RUn command is given
+
+        if dec.Asm.Run_Command != "":
+            # A run command is given, let's run it
+
+            os.system(dec.Asm.Run_Command)
+
+
+# ------------------------------------------------------------------------------
 
 def Assemble(sourcename):
 
@@ -85,15 +100,14 @@ def Assemble(sourcename):
     """
 
     global Asm, Flags
-    
-#
+
     Prepare_For_Pass()
 
-    print ("")
+    print("")
     if dec.Asm.Pass == 1:
-        print ("Pass one")
+        print("Pass one")
     else:
-        print ("Pass two")
+        print("Pass two")
 
     files.OpenSourceFile(sourcename)    # Open main source file
 
@@ -121,14 +135,16 @@ def Assemble(sourcename):
             dec.Asm.Parse_Line = dec.Asm.File_Handle[index].readline()
             dec.Asm.File_LineNo[index] = dec.Asm.File_LineNo[index] + 1
             lastline = dec.Asm.File_LineNo[index]
-            lineno = dec.Asm.File_LineNo[index]   # Save this, may change by .CH
+            # Save this, may change by .CH
+            lineno = dec.Asm.File_LineNo[index]
             if len(dec.Asm.Parse_Line) > 0:
                 # Not end of file
                 # Now expand tabs, get rid of eol, truncate the line to a
                 # sensible length and append trailing space.
                 # This trailing space will ease parsing the string.
                 # Windows tends to crash when the line length > 184
-                dec.Asm.Parse_Line = dec.Asm.Parse_Line.expandtabs(8).rstrip() + " "
+                dec.Asm.Parse_Line = \
+                    dec.Asm.Parse_Line.expandtabs(8).rstrip() + " "
                 ParseLine()     # Parse this source line
                 listing.ListLine(lineno, dec.Asm.Parse_Line)
                 if dec.Flags.EndFile:
@@ -145,7 +161,8 @@ def Assemble(sourcename):
         dec.Asm.File_LineNo.pop()
         dec.Asm.File_Name.pop()
 
-    dec.Asm.File_Name.append(sourcename)   # We may need this in case of errors during cleanup
+    # We may need this in case of errors during cleanup
+    dec.Asm.File_Name.append(sourcename)
     dec.Asm.File_LineNo.append(lastline)
 
     if dec.Cross.Name != "":
@@ -161,7 +178,8 @@ def Assemble(sourcename):
     files.SymbolFile()
     files.CloseAllFiles()
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def ParseLine():
 
@@ -176,8 +194,11 @@ def ParseLine():
     """
 
     global Asm, Flags, Label
+
     global current_aid_pointer
     global array_aid, ending_address # JKL
+
+
     dec.Asm.Parse_Pointer = 0
     dec.Asm.New_Label = ""
     dec.Asm.Mnemonic = ""
@@ -192,12 +213,12 @@ def ParseLine():
         return
 
     if dec.Asm.Macro_Def != '':
-        # Defining a Macro
+        # Defining a Macro, add this line to macro
         macros.DefineMacro()
         return
 
     if dec.Asm.Cond_False == 0:
-        # Conditional assembly is ture. Have to assemble this line
+        # Conditional assembly is true. Have to assemble this line
 
         # Select memory mode
         # May have changed by previous line
@@ -216,18 +237,20 @@ def ParseLine():
             return
 
         newlabel = GetLabelName()
-        globlab = string.ascii_uppercase + '_'
+        globlab = string.ascii_uppercase + '_'  # Legal begin chars of label
 
         if len(newlabel) > 0 and (newlabel[0] in globlab):
-            # Clear these in case we have to expand a macro on this line
-            dec.Asm.Macro_Number = 0
-            dec.Asm.Local_Index = 0
-
-            dec.Asm.Last_Global = newlabel
+            # New global label defined
+            newglobal = True
+        else:
+            # No new global lable defined
+            newglobal = False
 
         if NowChar() == ":":
+            # It's a macro label
             IncParsePointer()
         if NowChar() != " ":
+            # Can't be a bare :
             errors.DoError('illlabel', False)
             return              # Dont' bother to continue
         dec.Asm.New_Label = newlabel
@@ -238,44 +261,64 @@ def ParseLine():
         dec.Asm.Mnemonic = GetMnemonic()
 
         if dec.Asm.Mnemonic == "":
-            dec.Asm.Parse_Pointer = 0   # No mnemonic means no operand either
+            # No mnemonic means no operand either
+            dec.Asm.Parse_Pointer = 0
         else:
+            # Parse the operand field
             dec.Asm.Parse_Pointer = FindOperandField()
- 
+
+        if newglobal and dec.Asm.Mnemonic[:3] != '.SE':
+            # Set last assigned global label name, only when not .SE directive
+            dec.Asm.Last_Global = newlabel
+
+            # Reset macro indexes
+            dec.Asm.Macro_Number = 0
+            dec.Asm.Local_Index = 0
+
         DoAssemble()  # Got all the ingredients, now put them all together
         if dec.Asm.New_Label != "":
             AssignLabel(dec.Asm.New_Label, macrolevel)
     else:
-        # Conditional assembly is false, accept only .DO, .EL and .FI directives
+        # Conditional assembly is false, accept only .DO, .EL and
+        # .FI directives
         if IsComment():
             # Nothing to do in this line, it's a comment
             return
 
         if NowChar() != " ":
             # A label is declared here, get it but don't bother about syntax
-            dec.Asm.New_Label = GetWord("",""," ")
+            dec.Asm.New_Label = GetWord("", "", " ")
 
         dec.Asm.Mnemonic = GetMnemonic()
- 
+       
         #jkl
         #sys.stdout = sys.__stdout__
- 
+
+
         if dec.Asm.Mnemonic != "":
             if dec.Asm.Mnemonic[:3] in (".DO", ".EL", ".FI"):
                 # These are the only directives of interest now
                 dec.Asm.Parse_Pointer = FindOperandField()
                 DoAssemble()
     #JKL NOX
-    if (len(dec.Asm.List_Line)> 0):
+    found_list=""
+    print("List_Line=" + str(dec.Asm.List_Line))
+    if (len(dec.Asm.List_Line)> 0 ):
+        print("found a list line!")
+        found_list=len(dec.Asm.List_Line)
+
+    if (found_list!=""): # len(dec.Asm.List_Line)> 0):
         #print(str(hex(dec.Asm.BOL_Address)) + " " +dec.Asm.Mnemonic + " " + dec.Asm.List_Line[8:14] + " " + str(dec.Asm.List_Byte_Cnt) + " ")
- 
+
         # TODO ADD LABEL HERE, LINK BACK IN TO NEW ADDITIONAL SYMBOL TABLE
         array_aid[dec.Asm.BOL_Address]= {'address': dec.Asm.BOL_Address, 'operator': dec.Asm.Mnemonic, 'operand': dec.Asm.List_Line[8:14], 'byte_cnt': dec.Asm.List_Byte_Cnt}
-       
+
         print((array_aid[dec.Asm.BOL_Address]))
 
     ending_address = dec.Asm.BOL_Address
-#-----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
 
 def DoAssemble():
 
@@ -289,7 +332,8 @@ def DoAssemble():
         else:
             DoMnemonic()
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def DoMnemonic():
 
@@ -298,7 +342,8 @@ def DoMnemonic():
     else:
         dec.Cross.Mnemonic()
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def DoDirective():
 
@@ -312,7 +357,8 @@ def DoDirective():
         # directive not handled by cross overlay, do it our selves!
         direct.DoDir()
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def DoMacro():
 
@@ -326,13 +372,15 @@ def DoMacro():
             # Push macroname and line number on macro stack
             # This triggers ExpandMacro to go to work
             parameters = macros.GetParameters()
-            dec.Asm.Macro_Stack.append([macroname, 0, dec.Asm.Local_Index, parameters])
+            dec.Asm.Macro_Stack.append([macroname, 0,
+                                        dec.Asm.Local_Index, parameters])
             dec.Asm.Macro_Number = dec.Asm.Macro_Number + 1
             dec.Asm.Local_Index = dec.Asm.Macro_Number
         else:
             errors.DoError('neximacn', False)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def Prepare_For_Pass():
 
@@ -350,7 +398,7 @@ def Prepare_For_Pass():
     dec.Cross.CleanUp = None
     dec.Cross.SaveByte = None
 
-    dec.Cross.SaveByte = eval('target.SaveByte') # Use default save routine
+    dec.Cross.SaveByte = eval('target.SaveByte')  # Use default save routine
     dec.Asm.Cond_True = 0           # Reset conditional assembly
     dec.Asm.Cond_False = 0
     dec.Asm.Macro_Number = 0        # Macro expansion counter
@@ -383,7 +431,8 @@ def Prepare_For_Pass():
     dec.Flags.ExitMacro = False     # Flag used by .XM to exit macro
     dec.Flags.DummyMode = False     # Dummy mode flag
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def IsComment():
 
@@ -411,7 +460,8 @@ def IsComment():
             return True
         return False    # It's not a comment line
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def FindNextNonSpace():
 
@@ -428,7 +478,8 @@ def FindNextNonSpace():
             return -1
     return dec.Asm.Parse_Pointer
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def IncParsePointer():
 
@@ -441,7 +492,8 @@ def IncParsePointer():
     if dec.Asm.Parse_Pointer < len(dec.Asm.Parse_Line) - 1:
         dec.Asm.Parse_Pointer = dec.Asm.Parse_Pointer + 1
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def NowChar(forward=False):
 
@@ -458,7 +510,8 @@ def NowChar(forward=False):
 
     return text
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def MoreParameters():
 
@@ -481,7 +534,8 @@ def MoreParameters():
     errors.DoError('badoper', False)
     return False
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetWord(legal1="", legal2="", endchars=" ,"):
 
@@ -512,9 +566,9 @@ def GetWord(legal1="", legal2="", endchars=" ,"):
         # The text is only comment!
         return text
 
-    if not ' ' in endchars:
+    if ' ' not in endchars:
         # A space must be contained in endchars in order to find end of line
-        endchars= endchars + ' '
+        endchars = endchars + ' '
 
     if legal1 == "":
         # Accept anything, except endchars
@@ -530,9 +584,10 @@ def GetWord(legal1="", legal2="", endchars=" ,"):
                 text = text + NowChar(True).upper()
     return text
 
-#-----------------------------------------------------------------------------
 
-def GetLabelName(local = True):
+# -----------------------------------------------------------------------------
+
+def GetLabelName(local=True):
 
     """
     Start reading the parse line from current position and isolate the label
@@ -557,7 +612,8 @@ def GetLabelName(local = True):
 
     return label
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetMnemonic():
 
@@ -573,7 +629,8 @@ def GetMnemonic():
     else:
         return ""       # No mnemonic is found
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def FindOperandField():
 
@@ -600,89 +657,106 @@ def FindOperandField():
             return 0    # Operand field is comment
         if dec.Asm.Parse_Pointer >= (oldpointer + 10):
             dec.Asm.Optional = False
-
         return dec.Asm.Parse_Pointer   # Operand field begins here
     else:
         dec.Asm.Optional = False
         return 0        # No operand found
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def AssignLabel(newlabel, macrolevel):
 
     """
     Assign a value to a new label.
-    It accepts the name of the new label.
+    It accepts the name of the new label and the current macrolevel.
     Some tests are made to see if the label exists and hasn't changed value.
-    During pass 2 it should still be in sync with pass 1 also.
+    During pass 2 it should still be in sync with pass 1. Unless it was a
+    variable, defined by the .SE directive.
     """
 
     global Asm
 
     if dec.Asm.Mnemonic[:3] == '.SE':
+        # A variable assignment
         rw = True
     else:
+        # A constant assignment
         rw = False
 
     if newlabel[0] in '.:':
         # It's a local label, add the last global in front of it
         # and current macro number behind it if it's a macro label
         if dec.Asm.Last_Global != '':
+            # There was a global label
             if newlabel[0] == '.':
-                # Starting with a dot is always index level 000
+                # Starting with a dot is always macro level 000
                 newlabel = dec.Asm.Last_Global + ':' + newlabel[1:] + '|000'
             else:
                 # Otherwise it is the current macro level index
-                newlabel = dec.Asm.Last_Global + newlabel + '|' + str(macrolevel).zfill(3)
+                newlabel = dec.Asm.Last_Global + newlabel + '|' + \
+                            str(macrolevel).zfill(3)
         else:
+            # No global label assigned yet, is mandatory though
             errors.DoError('noglobal', False)
             return
 
     if dec.Asm.Pass == 1:
+        # Pass 2 is the only pass which assigns new labels
         if newlabel in dec.Asm.Symbol_Table:
             # Label already exists. Must be variable or same value now
             if rw:
+                # It's a variable, so the value may change
                 if dec.Asm.Symbol_Table[newlabel][2]:
                     # Both old and new defs are RW, set new value
                     dec.Asm.Symbol_Table[newlabel][0] = dec.Asm.BOL_Address
                 else:
+                    # Label was defined as a constant, now it's a variable
                     errors.DoError('con2var', False)
                     return
             else:
+                # It's a constant
                 if dec.Asm.Symbol_Table[newlabel][2]:
+                    # Label was defined as a variable, now it's a constant
                     errors.DoError('var2con', False)
-
                     return
                 else:
                     # Both old and new defs are RO, value must be the same!
-                    if dec.Asm.Symbol_Table[newlabel][0] != dec.Asm.BOL_Address:
+                    if dec.Asm.Symbol_Table[newlabel][0] != \
+                             dec.Asm.BOL_Address:
                         errors.DoError('extdef', False)
                         return
         else:
             # New label doesn't exist yet, add it to symbol table
-            dec.Asm.Symbol_Table[newlabel] = [dec.Asm.BOL_Address, True, rw, 0, dec.Asm.Memory, dec.Asm.File_Name[-1]]
+            dec.Asm.Symbol_Table[newlabel] = \
+                [dec.Asm.BOL_Address, True, rw, 0, dec.Asm.Memory,
+                 dec.Asm.File_Name[-1]]
     else:
-        # Pass 2
+        # Pass 2, no new labels are assigned any more. Values are checked.
         if newlabel in dec.Asm.Symbol_Table:
+            # This is what we expect, the label must exist by now
             if dec.Asm.Symbol_Table[newlabel][2]:
                 # It's a variable
                 # Don't bother testing if RW is still in sync
                 # Give stupid users a chance to break the system :-)
+                # Set the new value of the variable
                 dec.Asm.Symbol_Table[newlabel][0] = dec.Asm.BOL_Address
-                dec.Asm.Symbol_Table[newlabel][1] = False    # Label is declared from now on
+                # Label is declared from now on
+                dec.Asm.Symbol_Table[newlabel][1] = False
             else:
                 # It's a constant
                 if dec.Asm.Symbol_Table[newlabel][0] != dec.Asm.BOL_Address:
                     # Different value from last time!
                     errors.DoError('syncerr', False)
                 else:
-                    # Same value as last time! Mark declared
+                    # Same value as last time! Mark label as declared
                     dec.Asm.Symbol_Table[newlabel][1] = False
         else:
             # Label sould have been there in pass 2, sync error
             errors.DoError('syncerr', False)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def EvalExpr():
 
@@ -692,6 +766,11 @@ def EvalExpr():
     Returns tuple: (value of expression, forward ref label, memory mode of
     label)
     """
+
+    negate = NowChar()
+    if negate == '~':
+        # The negate symbole preceeds the value
+        IncParsePointer()
 
     operators = '+-*/\\&^|!=<>'
     totalval = GetValue()
@@ -722,9 +801,14 @@ def EvalExpr():
             errors.DoError('valerr', False)
             break
 
+    if negate == '~':
+        # The value needs to be negated first
+        totalval = (totalval[0] ^ 0xFFFFFFFF, totalval[1], totalval[2])
+
     return totalval     # Return a tuple (value, forward, memory)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def Calculate(val1, val2, operator):
 
@@ -822,14 +906,14 @@ def Calculate(val1, val2, operator):
         # Shift left
         if dec.Asm.Pass == 2 and (value2 < 0 or value2 > 31):
             # Check valid rane in pass 2 because of forward referenced labels
-            errors.DoError('range',false)
+            errors.DoError('range', false)
             value2 = 0
         result = value1 << value2
     elif operator == '>>':
         # Shift right
         if not val2[1] and (value2 < 0 or value2 > 63):
             # Check valid rane in pass 2 because of forward referenced labels
-            errors.DoError('range',false)
+            errors.DoError('range', false)
             value2 = 0
         result = value1 >> value2
 
@@ -841,7 +925,8 @@ def Calculate(val1, val2, operator):
 
     return (result, forward, memory)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetValue():
 
@@ -912,7 +997,8 @@ def GetValue():
 
     return (value, forward, memory)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetLabelValue():
 
@@ -930,7 +1016,8 @@ def GetLabelValue():
                 # Always use index 000 if it's a local label
                 label = dec.Asm.Last_Global + ':' + label[1:] + '|000'
             else:
-                label = dec.Asm.Last_Global + label + '|' + str(dec.Asm.Local_Index).zfill(3)
+                label = dec.Asm.Last_Global + label + '|' + \
+                        str(dec.Asm.Local_Index).zfill(3)
     else:
         # It's a global label
         label = GetLabelName(False)
@@ -942,7 +1029,8 @@ def GetLabelValue():
                     label = ''
                 else:
                     # Always use index 000 if global:local notation is used
-                    # Done for compatibility with version 2 and because you can't reference
+                    # Done for compatibility with version 2 and because you
+                    # can't reference
                     # macro labels from other global labels anyway.
                     label = label + local + '|000'
     if label != '':
@@ -951,14 +1039,16 @@ def GetLabelValue():
             value = dec.Asm.Symbol_Table[label][0]
             memory = dec.Asm.Symbol_Table[label][4]
             if dec.Asm.Pass == 1:
-                # Label exists already in pass 1, so it's not forward referenced
+                # Label exists already in pass 1, so it's not forward
+                # referenced
                 forward = False
             else:
                 # See if label already existed during pass 1
                 forward = dec.Asm.Symbol_Table[label][1]
 
                 # Increment label's reference counter
-                dec.Asm.Symbol_Table[label][3] = dec.Asm.Symbol_Table[label][3] + 1
+                dec.Asm.Symbol_Table[label][3] = \
+                    dec.Asm.Symbol_Table[label][3] + 1
         else:
             # Label does not exist
             value = 0
@@ -980,7 +1070,8 @@ def GetLabelValue():
 
     return (value, forward, memory)
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetDecimal():
 
@@ -991,18 +1082,20 @@ def GetDecimal():
     + Octal if it contains only octal digits followed by a Q
     + Hex first digit is 0 and next character is an x
     + Binary first digit is 0 and next character is a b
-    + Binary if it contains only 0 or 1 followed by a B, followed by non hexdigit
+    + Binary if it contains only 0 or 1 followed by a B, followed by non
+      hexdigit
     + Decimal otherwise or 1234d
 
     Note: 0101b notation might be confusing if followed by a legal hex digit,
-    like 0101ba. This might be a hex value, only if followed by an h eventually.
+    like 0101ba. This might be a hex value, only if followed by an h
+    eventually.
     Thus if we check for hex before we check for binary there is no cause for
     confusion.
     """
 
     global Asm
 
-    text = GetWord(string.ascii_uppercase + string.digits )
+    text = GetWord(string.ascii_uppercase + string.digits)
 
     if len(text) == 1:
         # A one digit value, can't be any simpler than this
@@ -1012,7 +1105,7 @@ def GetDecimal():
         # Must be hex 0ABCDH notation!
         hexval = text[:-1]
         if TestDigits(hexval, string.hexdigits):
-            return int(hexval,16)
+            return int(hexval, 16)
         else:
             errors.DoError('illhex', False)
             return 0
@@ -1021,7 +1114,7 @@ def GetDecimal():
         # Must be octal 0567Q notation!
         octval = text[:-1]
         if TestDigits(octval, string.octdigits):
-            return int(octval,8)
+            return int(octval, 8)
         else:
             errors.DoError('illoct', False)
             return 0
@@ -1030,16 +1123,17 @@ def GetDecimal():
         # It's hex 0xABCD notation!
         hexval = text[2:]
         if TestDigits(hexval, string.hexdigits):
-            return int(hexval,16)
+            return int(hexval, 16)
         else:
             errors.DoError('illhex', False)
             return 0
 
     if text[1] == 'B':
-        # It must be binary 0B0101 notation, it can't be hex anymore, it doesn't end in H
+        # It must be binary 0B0101 notation, it can't be hex anymore,
+        # it doesn't end in H
         binval = text[2:]
         if TestDigits(binval, '01'):
-            return int(binval,2)
+            return int(binval, 2)
         else:
             errors.DoError('illbin', False)
             return 0
@@ -1048,7 +1142,7 @@ def GetDecimal():
         # It must be binary 01010B notation
         binval = text[:-1]
         if TestDigits(binval, '01'):
-            return int(binval,2)
+            return int(binval, 2)
         else:
             errors.DoError('illbin', False)
             return 0
@@ -1070,7 +1164,8 @@ def GetDecimal():
         errors.DoError('illdec', False)
         return 0
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def TestDigits(text, valid):
 
@@ -1078,12 +1173,13 @@ def TestDigits(text, valid):
         return False
 
     for i in text:
-        if not i in valid:
+        if i not in valid:
             return False
 
     return True
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetHex():
 
@@ -1112,7 +1208,8 @@ def GetHex():
         errors.DoError('illhex', False)
         return 0
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetBin():
 
@@ -1138,7 +1235,8 @@ def GetBin():
         errors.DoError('illbin', False)
         return 0
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetOct():
 
@@ -1162,7 +1260,8 @@ def GetOct():
         errors.DoError('illoct', False)
         return 0
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def GetAsciiValue():
 
@@ -1179,7 +1278,8 @@ def GetAsciiValue():
 
     return value
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 def CheckVersions(cross_version, min_version):
 
@@ -1193,22 +1293,21 @@ def CheckVersions(cross_version, min_version):
 
     # All major version numbers should match exactly
     if (av[0] != cv[0]) or (av[0] != mv[0]):
-        errors.DoError('version',True)
+        errors.DoError('version', True)
 
-    # Minor version number of assembler should be higher than minimum requirement
+    # Minor version number of assembler should be higher than
+    #  minimum requirement
     if (av[1] < mv[1]):
-        errors.DoError('version',True)
+        errors.DoError('version', True)
 
     # Ignore Minor subversion numbers, they are irrelevant
 
-#-----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    print ("")
-    print ("This is a python module, it's not a program.")
-    print ("This module is part of the sbasm package.")
-    print ("Run sbasm instead.")
-    print ("")
-
-
-
+    print("")
+    print("This is a python module, it's not a program.")
+    print("This module is part of the sbasm package.")
+    print("Run sbasm instead.")
+    print("")
